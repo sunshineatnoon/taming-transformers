@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    k8s-app: research
+    user: xueting 
+  generateName: 06-08-taming-coco
+  namespace: image-model
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gpu-type
+                operator: In
+                values: ["1080Ti", "2080Ti", "2080"]
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                  - patternlab.calit2.optiputer.net
+                  - k8s-gpu-03.sdsc.optiputer.net
+      containers:
+      - name: research
+        image: gitlab-registry.nautilus.optiputer.net/sunshineatnoon/image-model:latest 
+        imagePullPolicy: Always
+        command:
+          - "sh"
+          - "-c"
+        args:
+          - "cd /workspace && git clone https://sunshineatnoon:49531218Lxt@github.com/sunshineatnoon/taming-transformers && cd taming-transformers && python main.py --base configs/custom_vqgan.yaml -t True --gpus 0,1"
+        resources:
+          requests:
+            cpu: "10"
+            memory: "6Gi"
+            nvidia.com/gpu: "2"
+            ephemeral-storage: 20Gi
+          limits:
+            cpu: "24"
+            memory: "12Gi"
+            nvidia.com/gpu: "2"
+            ephemeral-storage: 30Gi
+        volumeMounts:
+          - mountPath: /mnt/source # the directory you can access your persistent storage in container
+            name: src
+          - mountPath: /dev/shm # Crucial for multi-gpu or multi processing jobs -> enlarge shared memory
+            name: dshm
+          - mountPath: /data
+            name: dst
+      initContainers:
+      - name: init-data
+        image: gitlab-registry.nautilus.optiputer.net/prp/gsutil
+        command: ["/bin/sh"] # replace this with your own job execution scripts
+        args: ["-c", "mkdir -p /mnt/dest/train2017;
+        gsutil -m rsync -erCUP /mnt/source/train2017 /mnt/dest/train2017;
+        gsutil -m rsync -erCUP /mnt/source/train2017 /mnt/dest/train2017;
+        exit 0"]
+        volumeMounts:
+          - name: src
+            mountPath: /mnt/source
+          - name: dst
+            mountPath: /mnt/dest
+      nodeSelector:
+        nautilus.io/disktype: nvme
+      volumes:
+        - name: dst
+          emptyDir: {}
+        - name: src
+          persistentVolumeClaim:
+            claimName: image-model-pvc
+        - name: dshm
+          emptyDir:
+            medium: Memory
