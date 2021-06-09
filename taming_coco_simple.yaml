@@ -4,7 +4,7 @@ metadata:
   labels:
     k8s-app: research
     user: xueting 
-  generateName: 06-08-taming-coco
+  generateName: 06-09-taming-coco-simple
   namespace: image-model
 spec:
   template:
@@ -31,7 +31,7 @@ spec:
           - "sh"
           - "-c"
         args:
-          - "cd /workspace && git clone https://sunshineatnoon:49531218Lxt@github.com/sunshineatnoon/taming-transformers && cd taming-transformers && python main.py --base configs/custom_vqgan.yaml -t True --gpus 0,1"
+          - "cd /workspace && git clone https://sunshineatnoon:49531218Lxt@github.com/sunshineatnoon/taming-transformers && cd taming-transformers && python main.py --base configs/custom_simple_vqgan.yaml -t True --gpus 0,1"
         resources:
           requests:
             cpu: "10"
