@@ -31,10 +31,10 @@ spec:
           - "sh"
           - "-c"
         args:
-          - "cd /workspace && git clone https://sunshineatnoon:49531218Lxt@github.com/sunshineatnoon/taming-transformers && cd taming-transformers && python main.py --base configs/custom_simple_vqgan.yaml -t True --gpus 0,1"
+          - "cd /workspace && git clone https://sunshineatnoon:49531218Lxt@github.com/sunshineatnoon/taming-transformers && cd taming-transformers && python main.py --base configs/custom_simple_vqgan_sp.yaml -t True --gpus 0,1"
         resources:
           requests:
-            cpu: "10"
+            cpu: "8"
             memory: "6Gi"
             nvidia.com/gpu: "2"
             ephemeral-storage: 20Gi

@@ -33,10 +33,10 @@ data:
     train:
       target: taming.data.custom.CustomTrainSP
       params:
-        training_images_list_file: data/cocotrain.txt
+        training_images_list_file: /mnt/source/coco/train.txt
         size: 224
     validation:
       target: taming.data.custom.CustomTestSP
       params:
-        test_images_list_file: data/cocoval.txt
+        test_images_list_file: /mnt/source/coco/val.txt
         size: 224
