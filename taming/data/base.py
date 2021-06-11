@@ -3,6 +3,7 @@ import numpy as np
 import albumentations
 from PIL import Image
 from torch.utils.data import Dataset, ConcatDataset
+from skimage.segmentation import slic
 
 
 class ConcatDatasetWithIndex(ConcatDataset):
@@ -58,6 +59,47 @@ class ImagePaths(Dataset):
             example[k] = self.labels[k][i]
         return example
 
+class ImagePathsSP(Dataset):
+    def __init__(self, paths, size=None, random_crop=False, labels=None):
+        self.size = size
+        self.random_crop = random_crop
+
+        self.labels = dict() if labels is None else labels
+        self.labels["file_path_"] = paths
+        self._length = len(paths)
+
+        if self.size is not None and self.size > 0:
+            self.rescaler = albumentations.SmallestMaxSize(max_size = self.size)
+            if not self.random_crop:
+                self.cropper = albumentations.CenterCrop(height=self.size,width=self.size)
+            else:
+                self.cropper = albumentations.RandomCrop(height=self.size,width=self.size)
+            self.preprocessor = albumentations.Compose([self.rescaler, self.cropper])
+        else:
+            self.preprocessor = lambda **kwargs: kwargs
+
+    def __len__(self):
+        return self._length
+
+    def preprocess_image(self, image_path):
+        image = Image.open(image_path)
+        if not image.mode == "RGB":
+            image = image.convert("RGB")
+        image = np.array(image).astype(np.uint8)
+        image = self.preprocessor(image=image)["image"]
+        h, w, _ = image.shape
+        sp_num = (h//16)*(w//16)
+        sl = slic(image, n_segments=sp_num, compactness=10, start_label=0, min_size_factor=0.3)
+        sl[sl >= sp_num] = sp_num - 1
+        image = (image/127.5 - 1.0).astype(np.float32)
+        return image, sl
+
+    def __getitem__(self, i):
+        example = dict()
+        example["image"], example['slic'] = self.preprocess_image(self.labels["file_path_"][i])
+        for k in self.labels:
+            example[k] = self.labels[k][i]
+        return example
 
 class NumpyPaths(ImagePaths):
     def preprocess_image(self, image_path):

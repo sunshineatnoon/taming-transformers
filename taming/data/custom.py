@@ -3,7 +3,7 @@ import numpy as np
 import albumentations
 from torch.utils.data import Dataset
 
-from taming.data.base import ImagePaths, NumpyPaths, ConcatDatasetWithIndex
+from taming.data.base import ImagePaths, ImagePathsSP, NumpyPaths, ConcatDatasetWithIndex
 
 
 class CustomBase(Dataset):
@@ -34,3 +34,18 @@ class CustomTest(CustomBase):
         with open(test_images_list_file, "r") as f:
             paths = f.read().splitlines()
         self.data = ImagePaths(paths=paths, size=size, random_crop=False)
+
+class CustomTrainSP(CustomBase):
+    def __init__(self, size, training_images_list_file):
+        super().__init__()
+        with open(training_images_list_file, "r") as f:
+            paths = f.read().splitlines()
+        self.data = ImagePathsSP(paths=paths, size=size, random_crop=False)
+
+
+class CustomTestSP(CustomBase):
+    def __init__(self, size, test_images_list_file):
+        super().__init__()
+        with open(test_images_list_file, "r") as f:
+            paths = f.read().splitlines()
+        self.data = ImagePathsSP(paths=paths, size=size, random_crop=False)
